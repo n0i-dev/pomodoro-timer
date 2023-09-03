@@ -1,85 +1,59 @@
-
+import * as timer from "./timer.js";
 const mainButton = document.getElementById("main-button");
 const resetButton = document.getElementById("reset") ;
 const timerSection = document.getElementById("timer");
+const settingsButton = document.getElementById("settings");
+const timerInput = document.getElementById("timer-length");
 const modal = document.querySelector(".modal");
 
-const timerState = {
-  InitialTime: localStorage.getItem("timerLengthSetting") ?? (25 * 60),
-  RemainingTime: initializeRemainingTime(),
-  IsPaused: true,
-  TimerId: null
-};
-
-timerSection.innerHTML = getTimeFormatted();
+timerSection.innerHTML = timer.getTimeFormatted();
 
 mainButton.addEventListener("click", () => {
-  if (timerState.IsPaused)
-  {
-    startTimer(timerState.RemainingTime);
+  if (timer.isPaused()) {
+    startTimer();
     return;
   }
   pauseTimer("Resume");
 });
 
-document.getElementById('settings').addEventListener("click", () => {
-  modal.classList.add('is-active');
+document.getElementById("settings").addEventListener("click", () => {
+  modal.classList.add("is-active");
 });
 
-(document.querySelectorAll('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot') || []).forEach(($close) => {
-  $close.addEventListener('click', () => {
-    modal.classList.remove('is-active');
+(
+  document.querySelectorAll(
+    ".modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot"
+  ) || []
+).forEach(($close) => {
+  $close.addEventListener("click", () => {
+    modal.classList.remove("is-active");
   });
 });
 
 resetButton.addEventListener("click", resetTimer);
+settingsButton.addEventListener("click", () => {pauseTimer("Resume")});
 
-function startTimer(minutes) {
+timerInput.value = Math.floor(timer.getInitialTime() / 60);
+timerInput.addEventListener("input", (event) => {
+    timer.setInitialTime(event.target.value);
+    timer.resetTimer();
+    timerSection.innerHTML = timer.getTimeFormatted();
+});
+
+function startTimer() {
   console.log("Timer has started!");
-  timerState.TimerId = setInterval(decrementTimer, 1000, minutes);
-  timerState.IsPaused = false;
-  mainButton.innerHTML = "Pause"
+  timer.startTimer(() => timerSection.innerHTML = timer.getTimeFormatted());
+  mainButton.innerHTML = "Pause";
 }
 
 function pauseTimer(afterPauseText) {
   console.log("Timer has been paused!");
-  clearInterval(timerState.TimerId);
-  timerState.IsPaused = true;
+  timer.pauseTimer();
   mainButton.innerHTML = afterPauseText;
 }
 
 function resetTimer() {
   pauseTimer("Start");
-  localStorage.setItem("remainingTimeInSeconds", timerState.InitialTime);
-  timerState.RemainingTime = timerState.InitialTime;
-  timerSection.innerHTML = getTimeFormatted();
-}
-
-function decrementTimer(minutesSet) {
-  console.log("Timer running!")
-  timerState.RemainingTime = timerState.RemainingTime - 1;
-  try {
-    timer.innerHTML = getTimeFormatted();
-    localStorage.setItem("remainingTimeInSeconds", timerState.RemainingTime);
-    if (timerState.RemainingTime == 0) {
-      clearInterval(timerState.TimerId);
-      console.log("Timer has ended!")
-    }
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function getTimeFormatted() {
-  let minutes = `${Math.floor(timerState.RemainingTime / 60)}`;
-  let seconds = `${timerState.RemainingTime % 60}`;
-  return `${minutes.padStart(2, 0)}:${seconds.padStart(2, 0)}`;
-}
-
-function initializeRemainingTime() {
-  let remainingTimeSetting = localStorage.getItem("remainingTimeInSeconds");
-  if (remainingTimeSetting === null || isNaN(remainingTimeSetting)) {
-    return localStorage.getItem("timerLengthSetting") ?? (25 * 60);
-  }
-  return remainingTimeSetting;
+  timer.resetTimer();
+  timerSection.innerHTML = timer.getTimeFormatted();
 }
