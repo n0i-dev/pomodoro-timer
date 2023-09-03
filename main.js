@@ -2,6 +2,8 @@
 const mainButton = document.getElementById("main-button");
 const resetButton = document.getElementById("reset") ;
 const timerSection = document.getElementById("timer");
+const modal = document.querySelector(".modal");
+
 const timerState = {
   InitialTime: localStorage.getItem("timerLengthSetting") ?? (25 * 60),
   RemainingTime: initializeRemainingTime(),
@@ -18,6 +20,16 @@ mainButton.addEventListener("click", () => {
     return;
   }
   pauseTimer("Resume");
+});
+
+document.getElementById('settings').addEventListener("click", () => {
+  modal.classList.add('is-active');
+});
+
+(document.querySelectorAll('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot') || []).forEach(($close) => {
+  $close.addEventListener('click', () => {
+    modal.classList.remove('is-active');
+  });
 });
 
 resetButton.addEventListener("click", resetTimer);
@@ -59,7 +71,6 @@ function decrementTimer(minutesSet) {
 }
 
 function getTimeFormatted() {
-  console.log(timerState.RemainingTime)
   let minutes = `${Math.floor(timerState.RemainingTime / 60)}`;
   let seconds = `${timerState.RemainingTime % 60}`;
   return `${minutes.padStart(2, 0)}:${seconds.padStart(2, 0)}`;
