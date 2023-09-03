@@ -14,10 +14,10 @@ export function getInitialTime() {return timerState.InitialTime}
 
 export function isPaused() {return timerState.IsPaused; }
 
-export function startTimer(callback) {
+export function startTimer(onTick, onFinish) {
   timerState.TimerId = setInterval(() => {
-    decrementTimer();
-    callback();
+    decrementTimer(onFinish);
+    onTick();
   }, 1000);
   timerState.IsPaused = false;
 }
@@ -44,14 +44,16 @@ export function getTimeFormatted() {
   return `${minutes.padStart(2, 0)}:${seconds.padStart(2, 0)}`;
 }
 
-function decrementTimer() {
-  timerState.RemainingTime = timerState.RemainingTime - 1;
+function decrementTimer(onFinish) {
   try {
-    localStorage.setItem("remainingTimeInSeconds", timerState.RemainingTime);
-    if (timerState.RemainingTime == 0) {
+    if (timerState.RemainingTime <= 0) {
       clearInterval(timerState.TimerId);
       console.log("Timer has ended!")
+      onFinish();
+      return;
     }
+    timerState.RemainingTime = timerState.RemainingTime - 1;
+    localStorage.setItem("remainingTimeInSeconds", timerState.RemainingTime);
   } catch (error) {
     console.error(error);
   }

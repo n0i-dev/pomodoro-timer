@@ -1,4 +1,6 @@
 import * as timer from "./timer.js";
+import * as notifications from "./notifications.js"
+const NOTIIFCATION_TITLE = "n0i | Pomodoro Timer";
 const mainButton = document.getElementById("main-button");
 const resetButton = document.getElementById("reset") ;
 const timerSection = document.getElementById("timer");
@@ -42,7 +44,9 @@ timerInput.addEventListener("input", (event) => {
 
 function startTimer() {
   console.log("Timer has started!");
-  timer.startTimer(() => timerSection.innerHTML = timer.getTimeFormatted());
+  timer.startTimer(
+    () => timerSection.innerHTML = timer.getTimeFormatted(),
+    onTimerFinish);
   mainButton.innerHTML = "Pause";
 }
 
@@ -56,4 +60,9 @@ function resetTimer() {
   pauseTimer("Start");
   timer.resetTimer();
   timerSection.innerHTML = timer.getTimeFormatted();
+}
+
+function onTimerFinish() {
+  notifications.notifyUser(NOTIIFCATION_TITLE, "Your timer is finished!");
+  resetTimer();
 }
