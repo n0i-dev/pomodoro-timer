@@ -30,6 +30,12 @@
         <div class="column is-one-fifth"></div>
         <div class="column is-three-fifths">
           <div class="box has-text-centered" id="timer">00:00</div>
+          <div class="tabs is-toggle is-toggle-rounded is-centered has-text-centered">
+            <ul>
+              <li class="is-active"><a>Work</a></li>
+              <li><a>Break</a></li>
+            </ul>
+          </div>
         </div>
         <div class="column is-one-fifth"></div>
       </div>
@@ -54,6 +60,16 @@
             </div>
             <div class="control">
               <input id="timer-length" class="input field-body" type="number" />
+            </div>
+          </div>
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label id="break-timer-length-control" class="label field-body"
+                >Break length</label
+              >
+            </div>
+            <div class="control">
+              <input id="break-timer-length" class="input field-body" type="number" />
             </div>
           </div>
           <div class="field is-horizontal">
