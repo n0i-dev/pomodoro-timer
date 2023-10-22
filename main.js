@@ -1,10 +1,12 @@
 import * as timer from "./timer.js";
 import * as notifications from "./notifications.js"
-const NOTIIFCATION_TITLE = "n0i | Pomodoro Timer";
+const PAGE_TITLE = "n0i | Pomodoro Timer";
+const TIMER_FINISH_TITLE = "n0i | Timer's finished!";
 const mainButton = document.getElementById("main-button");
 const timerSection = document.getElementById("timer");
 const settingsButton = document.getElementById("settings");
 const modal = document.querySelector(".modal");
+let timerFinishIntervalId = null;
 
 class TimerGrouping {
   constructor(inputElement, configurationKey, defaultTimerLength) {
@@ -67,6 +69,15 @@ document.querySelectorAll("ul > li").forEach((element) => {
   onTabClick(element);
 });
 
+window.addEventListener("focus", () => {
+  if (timerFinishIntervalId != null)
+  {
+    clearInterval(timerFinishIntervalId);
+    document.title = PAGE_TITLE;
+    timerFinishIntervalId = null;
+  }
+});
+
 function onTabClick(element) {
   element.addEventListener("click", () => {
     let innerText = element.firstElementChild.textContent;
@@ -87,7 +98,6 @@ function onTabClick(element) {
 }
 
 function startTimer() {
-  console.log("Timer has started!");
   selectedGroup.timer.startTimer(
     () => timerSection.innerHTML = selectedGroup.timer.getTimeFormatted(),
     onTimerFinish);
@@ -95,7 +105,6 @@ function startTimer() {
 }
 
 function pauseTimer(afterPauseText) {
-  console.log("Timer has been paused!");
   selectedGroup.timer.pauseTimer();
   mainButton.innerHTML = afterPauseText;
 }
@@ -107,6 +116,11 @@ function resetTimer() {
 }
 
 function onTimerFinish() {
-  notifications.notifyUser(NOTIIFCATION_TITLE, "Your timer is finished!");
+  notifications.notifyUser(PAGE_TITLE, "Your timer is finished!");
   resetTimer();
+  timerFinishIntervalId = setInterval(switchTitles, 700);
+}
+
+function switchTitles() {
+  document.title = document.title == PAGE_TITLE ? TIMER_FINISH_TITLE : PAGE_TITLE;
 }
