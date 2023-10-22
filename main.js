@@ -2,25 +2,40 @@ import * as timer from "./timer.js";
 import * as notifications from "./notifications.js"
 const NOTIIFCATION_TITLE = "n0i | Pomodoro Timer";
 const mainButton = document.getElementById("main-button");
-const resetButton = document.getElementById("reset") ;
 const timerSection = document.getElementById("timer");
 const settingsButton = document.getElementById("settings");
-const timerInput = document.getElementById("timer-length");
-const breakTimerInput = document.getElementById("break-timer-length");
 const modal = document.querySelector(".modal");
-let workTabSelected = true;
 
-timerSection.innerHTML = timer.getTimeFormatted();
+class TimerGrouping {
+  constructor(inputElement, configurationKey, defaultTimerLength) {
+    this.timer = new timer.Timer(localStorage.getItem(configurationKey) ?? defaultTimerLength);
+    this.inputElement = inputElement;
+    this.localStorageKey = configurationKey;
+  }
+
+  initializeTimer() {
+    this.timer.updateIntervalInMinutes(this.inputElement.value);
+    this.timer.resetTimer();
+  }
+}
+
+const pomodoroTimerGroups = {
+  work: new TimerGrouping(document.getElementById("timer-length"), "workTimeIntervalInMinutes", 25),
+  break: new TimerGrouping(document.getElementById("break-timer-length"), "breakTimeIntervalInMinutes", 5)
+};
+
+let selectedGroup = pomodoroTimerGroups.work;
+timerSection.innerHTML = selectedGroup.timer.getTimeFormatted();
 
 mainButton.addEventListener("click", () => {
-  if (timer.isPaused()) {
+  if (selectedGroup.timer.isPaused()) {
     startTimer();
     return;
   }
   pauseTimer("Resume");
 });
 
-document.getElementById("settings").addEventListener("click", () => {
+settingsButton.addEventListener("click", () => {
   modal.classList.add("is-active");
 });
 
@@ -34,26 +49,18 @@ document.getElementById("settings").addEventListener("click", () => {
   });
 });
 
-resetButton.addEventListener("click", resetTimer);
+document.getElementById("reset").addEventListener("click", resetTimer);
 settingsButton.addEventListener("click", () => {pauseTimer("Resume")});
-timerInput.value = Math.floor(timer.getInitialTime() / 60);
-timerInput.addEventListener("input", (event) => {
-  if (workTabSelected) {
-    timer.setInitialTime(event.target.value);
-    timer.resetTimer();
-    timerSection.innerHTML = timer.getTimeFormatted();
-  }
-});
 
-breakTimerInput.value = Math.floor(getBreakTimeLength());
-breakTimerInput.addEventListener("input", (event) => {
-  localStorage.setItem("breakLengthInMinutes", event.target.value);
-
-  if (!workTabSelected) {
-    timer.setInitialTime(event.target.value);
-    timer.resetTimer();
-    timerSection.innerHTML = timer.getTimeFormatted();
-  }
+[pomodoroTimerGroups.work, pomodoroTimerGroups.break].forEach(group => {
+  group.inputElement.value = group.timer.getInitialTime();
+  group.inputElement.addEventListener("input", (event) => {
+    group.timer.updateIntervalInMinutes(event.target.value);
+    localStorage.setItem(group.localStorageKey, event.target.value);
+    group.timer.resetTimer();
+    if (selectedGroup === group)
+      timerSection.innerHTML = group.timer.getTimeFormatted();
+  })
 });
 
 document.querySelectorAll("ul > li").forEach((element) => {
@@ -64,44 +71,39 @@ function onTabClick(element) {
   element.addEventListener("click", () => {
     let innerText = element.firstElementChild.textContent;
     pauseTimer("Start");
-    workTabSelected = innerText == "Work";
 
     if (innerText == "Work") {
-      timer.setInitialTime(timerInput.value);
+      selectedGroup = pomodoroTimerGroups.work;
     }
-    else {
-      timer.setInitialTime(getBreakTimeLength());
+    else if (innerText == "Break") {
+      selectedGroup = pomodoroTimerGroups.break;
     }
 
-    timer.resetTimer();
-    timerSection.innerHTML = timer.getTimeFormatted();
+    selectedGroup.initializeTimer();
+    timerSection.innerHTML = selectedGroup.timer.getTimeFormatted();
     document.querySelectorAll("ul > li.is-active").forEach((element) => element.classList.remove("is-active"));
     element.classList.add("is-active");
   });
 }
 
-function getBreakTimeLength() {
-  return localStorage.getItem("breakLengthInMinutes") ?? 5;
-}
-
 function startTimer() {
   console.log("Timer has started!");
-  timer.startTimer(
-    () => timerSection.innerHTML = timer.getTimeFormatted(),
+  selectedGroup.timer.startTimer(
+    () => timerSection.innerHTML = selectedGroup.timer.getTimeFormatted(),
     onTimerFinish);
   mainButton.innerHTML = "Pause";
 }
 
 function pauseTimer(afterPauseText) {
   console.log("Timer has been paused!");
-  timer.pauseTimer();
+  selectedGroup.timer.pauseTimer();
   mainButton.innerHTML = afterPauseText;
 }
 
 function resetTimer() {
   pauseTimer("Start");
-  timer.resetTimer();
-  timerSection.innerHTML = timer.getTimeFormatted();
+  selectedGroup.timer.resetTimer();
+  timerSection.innerHTML = selectedGroup.timer.getTimeFormatted();
 }
 
 function onTimerFinish() {

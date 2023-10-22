@@ -2,67 +2,68 @@
   Module to provide timer countdown and reset functionality
 */
 
-// Module-level timer state
-const timerState = {
-  InitialTime: localStorage.getItem("startingTimeInMinutes") * 60 ?? (25 * 60),
-  RemainingTime: initializeRemainingTime(),
-  IsPaused: true,
-  TimerId: null
-};
+export class Timer {
+  
+  // Private variable declarations
+  #intervalInMinutes;
+  #remainingTime;
+  #isRunning;
+  #timerId;
 
-export function getInitialTime() {return timerState.InitialTime}
+  constructor(intervalInMinutes) {
+    this.#intervalInMinutes = intervalInMinutes;
+    this.#remainingTime = intervalInMinutes * 60;
+    this.#isRunning = false;
+    this.#timerId = null;
+  }
 
-export function isPaused() {return timerState.IsPaused; }
+  getInitialTime() {
+    return this.#intervalInMinutes;
+  }
 
-export function startTimer(onTick, onFinish) {
-  timerState.TimerId = setInterval(() => {
-    decrementTimer(onFinish);
-    onTick();
-  }, 1000);
-  timerState.IsPaused = false;
-}
+  startTimer(onTick, onFinish) {
+    this.#timerId = setInterval(() => {
+      this.#decrementTimer(onFinish);
+      onTick();
+    }, 1000);
+    this.#isRunning = true;
+  }
 
-export function pauseTimer() {
-  clearInterval(timerState.TimerId);
-  timerState.IsPaused = true;
-}
+  updateIntervalInMinutes(minutes) {
+    this.#intervalInMinutes = minutes;
+  }
 
-export function setInitialTime(minutes) {
-  localStorage.setItem("startingTimeInMinutes", minutes);
-  timerState.InitialTime = minutes * 60;
-}
+  pauseTimer() {
+    clearInterval(this.#timerId);
+    this.#isRunning = false;
+  }
 
-export function resetTimer() {
-  localStorage.setItem("remainingTimeInSeconds", timerState.InitialTime);
-  timerState.RemainingTime = timerState.InitialTime;
-}
+  isPaused() {
+    return this.#isRunning == false;
+  }
 
-// Format the number of seconds left for the timer in minutes and seconds
-export function getTimeFormatted() {
-  let minutes = `${Math.floor(timerState.RemainingTime / 60)}`;
-  let seconds = `${timerState.RemainingTime % 60}`;
-  return `${minutes.padStart(2, 0)}:${seconds.padStart(2, 0)}`;
-}
+  resetTimer() {
+    this.#isRunning = false;
+    this.#remainingTime = this.#intervalInMinutes * 60;
+  }
 
-function decrementTimer(onFinish) {
-  try {
-    if (timerState.RemainingTime <= 0) {
-      clearInterval(timerState.TimerId);
-      console.log("Timer has ended!")
-      onFinish();
-      return;
+  getTimeFormatted() {
+    let minutes = `${Math.floor(this.#remainingTime / 60)}`;
+    let seconds = `${this.#remainingTime % 60}`;
+    return `${minutes.padStart(2, 0)}:${seconds.padStart(2, 0)}`;
+  }
+
+  #decrementTimer(onFinish) {
+    try {
+      if (this.#remainingTime <= 0) {
+        clearInterval(this.#timerId);
+        console.log("Timer has ended!")
+        onFinish();
+        return;
+      }
+      this.#remainingTime = this.#remainingTime - 1;
+    } catch (error) {
+      console.error(error);
     }
-    timerState.RemainingTime = timerState.RemainingTime - 1;
-    localStorage.setItem("remainingTimeInSeconds", timerState.RemainingTime);
-  } catch (error) {
-    console.error(error);
   }
-}
-
-function initializeRemainingTime() {
-  let remainingTimeSetting = localStorage.getItem("remainingTimeInSeconds");
-  if (remainingTimeSetting === null || isNaN(remainingTimeSetting)) {
-    return localStorage.getItem("startingTimeInMinutes") ?? (25 * 60);
-  }
-  return remainingTimeSetting;
-}
+};
