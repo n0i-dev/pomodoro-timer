@@ -52,7 +52,7 @@ settingsButton.addEventListener("click", () => {
 });
 
 document.getElementById("reset").addEventListener("click", resetTimer);
-settingsButton.addEventListener("click", () => {pauseTimer("Resume")});
+settingsButton.addEventListener("click", () => {pauseTimer((mainButton.innerHTML.includes("Start")) ? "Start" : "Resume")});
 
 [pomodoroTimerGroups.work, pomodoroTimerGroups.break].forEach(group => {
   group.inputElement.value = group.timer.getInitialTime();
